@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧机房控制系统 - 网页版</title>
+    
+    <!-- 引入Chart.js用于图表 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部区域 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .school-name {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .system-name {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .device-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+            animation: pulse 2s infinite;
+        }
+
+        .status-text {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 天气卡片 */
+        .weather-section {
+            margin-bottom: 20px;
+        }
+
+        .weather-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: 200px 1fr 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .weather-left {
+            text-align: center;
+        }
+
+        .weather-location {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .weather-icon {
+            font-size: 3em;
+        }
+
+        .weather-center {
+            text-align: center;
+        }
+
+        .weather-temp {
+            font-size: 3em;
+            font-weight: bold;
+            color: #333;
+            display: block;
+        }
+
+        .weather-text {
+            font-size: 1.2em;
+            color: #666;
+            margin: 5px 0;
+            display: block;
+        }
+
+        .weather-apparent {
+            font-size: 0.9em;
+            color: #999;
+            display: block;
+        }
+
+        .weather-right {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .weather-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .weather-info-label {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .weather-info-value {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* 运行模式 */
+        .mode-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .mode-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .mode-label {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .sync-time {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-tab {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f0f0f0;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .mode-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .offline-mode-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+        }
+
+        .offline-mode-left {
+            flex: 1;
+        }
+
+        .offline-mode-label {
+            font-weight: 500;
+            margin-bottom: 3px;
+            display: block;
+        }
+
+        .offline-mode-desc {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .offline-toggle {
+            width: 50px;
+            height: 26px;
+            border-radius: 13px;
+            background: #e0e0e0;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .offline-toggle.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .offline-toggle-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .offline-toggle-dot.active {
+            left: 27px;
+        }
+
+        /* 传感器数据 */
+        .sensor-section {
+            margin-bottom: 20px;
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 15px;
+        }
+
+        .sensor-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .sensor-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .sensor-left {
+            flex: 1;
+        }
+
+        .sensor-tag {
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+        .sensor-label {
+            font-size: 0.9em;
+            color: #666;
+            display: block;
+        }
+
+        .sensor-center {
+            font-size: 2.5em;
+        }
+
+        .sensor-right {
+            text-align: right;
+        }
+
+        .sensor-value-wrapper {
+            display: flex;
+            align-items: baseline;
+            justify-content: flex-end;
+            gap: 5px;
+        }
+
+        .sensor-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .sensor-unit {
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .sensor-trend {
+            margin-top: 5px;
+            font-size: 0.8em;
+        }
+
+        .trend-up {
+            color: #00b894;
+        }
+
+        .trend-down {
+            color: #e17055;
+        }
+
+        .trend-stable {
+            color: #0984e3;
+        }
+
+        /* 控制部分 */
+        .control-section {
+            margin-bottom: 20px;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .control-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .control-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .control-tag {
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .control-status-tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .control-status-tag.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .control-label {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .control-desc {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .control-toggle {
+            width: 60px;
+            height: 32px;
+            border-radius: 16px;
+            background: #e0e0e0;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-toggle.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .control-toggle.pending {
+            background: #ffc107;
+        }
+
+        .toggle-dot {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-dot.active {
+            left: 31px;
+        }
+
+        /* 历史数据部分 */
+        .history-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .history-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .history-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .date-input {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102,126,234,0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .history-charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 20px;
+        }
+
+        .history-chart-card {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .history-chart-title {
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .history-chart-wrapper {
+            height: 250px;
+            position: relative;
+        }
+
+        .history-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .history-stat-card {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .history-stat-label {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .history-stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* 日志入口 */
+        .log-entry-section {
+            margin-bottom: 20px;
+        }
+
+        .log-entry-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .log-entry-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .log-entry-icon {
+            font-size: 1.5em;
+        }
+
+        .log-entry-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+        }
+
+        .log-entry-arrow {
+            font-size: 1.2em;
+        }
+
+        /* 摄像头部分 */
+        .camera-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .camera-header {
+            margin-bottom: 15px;
+        }
+
+        .camera-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .camera-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .camera-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .camera-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .camera-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .camera-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102,126,234,0.4);
+        }
+
+        /* 图表区域 */
+        .charts-section {
+            margin-bottom: 20px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .chart-wrapper {
+            height: 300px;
+            position: relative;
+        }
+
+        /* 配置控制台 */
+        .config-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .config-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .config-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .config-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        /* 刷新间隔选择 */
+        .refresh-selector {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85em;
+        }
+
+        .refresh-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        /* 错误提示 */
+        .error-message {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .weather-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .weather-right {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .sensor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .control-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .history-charts {
+                grid-template-columns: 1fr;
+            }
+
+            .config-group {
+                flex-direction: column;
+            }
+
+            .config-input {
+                min-width: auto;
+            }
+
+            .camera-input-container {
+                flex-direction: column;
+            }
+
+            .history-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 40px;
+            font-size: 0.9em;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 配置控制台 -->
+        <div class="config-section">
+            <div class="config-title">⚙️ 系统配置</div>
+            <div class="config-group">
+                <input type="text" 
+                       id="tokenInput" 
+                       class="config-input" 
+                       placeholder="请输入OneNET Token (从onenet汇总.txt第140行复制)"
+                       value="version=2018-10-31&res=products%2FK3GGK1Sj7Q%2Fdevices%2Fstm&et=1787733887&method=md5&sign=7pieyIabazlMcHuGGmZ8qQ%3D%3D">
+                <button onclick="connectDevice()" class="btn-primary">🔗 连接设备</button>
+                <button onclick="refreshData()" class="btn-secondary">🔄 刷新数据</button>
+                
+                <div class="refresh-selector">
+                    <span style="color: #666; font-size: 0.9em;">自动刷新:</span>
+                    <button class="refresh-btn active" onclick="setRefreshInterval(this, 5000)">5秒</button>
+                    <button class="refresh-btn" onclick="setRefreshInterval(this, 10000)">10秒</button>
+                    <button class="refresh-btn" onclick="setRefreshInterval(this, 30000)">30秒</button>
+                    <div class="custom-refresh">
+                        <input type="number" id="customRefreshInput" placeholder="自定义(秒)" min="1" max="3600" style="width: 80px; padding: 6px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 0.85em;">
+                        <button class="btn-secondary" onclick="setCustomRefreshInterval()" style="padding: 6px 12px; font-size: 0.85em;">确定</button>
+                    </div>
+                    <button class="refresh-btn" onclick="setRefreshInterval(this, 0)">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 头部 -->
+        <div class="header">
+            <span class="school-name">中南林业科技大学</span>
+            <span class="system-name">智慧机房控制系统</span>
+            <div class="device-status">
+                <div id="statusDot" class="status-dot"></div>
+                <span id="statusText">设备离线</span>
+            </div>
+        </div>
+
+        <!-- 天气部分 -->
+        <div class="weather-section">
+            <div class="weather-card">
+                <div class="weather-left">
+                    <div class="weather-location">📍 <span id="weatherLocation">长沙市</span></div>
+                    <div class="weather-icon" id="weatherIcon">🌤️</div>
+                </div>
+                <div class="weather-center">
+                    <text class="weather-temp" id="weatherTemp">25°C</text>
+                    <text class="weather-text" id="weatherText">晴</text>
+                    <text class="weather-apparent" id="weatherApparent">体感 26°C</text>
+                </div>
+                <div class="weather-right">
+                    <div class="weather-info-item">
+                        <text class="weather-info-label">💨 风速</text>
+                        <text class="weather-info-value" id="weatherWindSpeed">3.2 m/s</text>
+                    </div>
+                    <div class="weather-info-item">
+                        <text class="weather-info-label">🧭 风向</text>
+                        <text class="weather-info-value" id="weatherWindDir">东北</text>
+                    </div>
+                    <div class="weather-info-item">
+                        <text class="weather-info-label">💧 湿度</text>
+                        <text class="weather-info-value" id="weatherHumidity">60%</text>
+                    </div>
+                    <div class="weather-info-item">
+                        <text class="weather-info-label">🌧️ 降水</text>
+                        <text class="weather-info-value" id="weatherRain">0 mm</text>
+                    </div>
+                    <div class="weather-info-item">
+                        <text class="weather-info-label">☁️ 云量</text>
+                        <text class="weather-info-value" id="weatherCloudCover">10%</text>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 运行模式 -->
+        <div class="mode-section">
+            <div class="mode-header">
+                <text class="mode-label">运行模式</text>
+                <text class="sync-time">最近同步 <span id="lastSyncTime">--:--:--</span></text>
+            </div>
+            <div class="mode-tabs">
+                <div class="mode-tab active" onclick="switchMode(this, 'manual')">手动</div>
+                <div class="mode-tab" onclick="switchMode(this, 'auto')">自动</div>
+            </div>
+            <div class="offline-mode-container">
+                <div class="offline-mode-left">
+                    <text class="offline-mode-label">离线模式</text>
+                    <text class="offline-mode-desc">跳过设备响应，直接上报云端</text>
+                </div>
+                <div class="offline-toggle" onclick="toggleOfflineMode(this)">
+                    <div class="offline-toggle-dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 传感器数据 -->
+        <div class="sensor-section">
+            <div class="sensor-grid">
+                <div class="sensor-card">
+                    <div class="sensor-left">
+                        <div class="sensor-tag">TMP</div>
+                        <text class="sensor-label">空气温度</text>
+                    </div>
+                    <div class="sensor-center">🌡️</div>
+                    <div class="sensor-right">
+                        <div class="sensor-value-wrapper">
+                            <text class="sensor-value" id="sensorTemp">--</text>
+                            <text class="sensor-unit">°C</text>
+                        </div>
+                        <div class="sensor-trend" id="tempTrend">
+                            <span>--</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sensor-card">
+                    <div class="sensor-left">
+                        <div class="sensor-tag">HUM</div>
+                        <text class="sensor-label">空气湿度</text>
+                    </div>
+                    <div class="sensor-center">💧</div>
+                    <div class="sensor-right">
+                        <div class="sensor-value-wrapper">
+                            <text class="sensor-value" id="sensorHumi">--</text>
+                            <text class="sensor-unit">%</text>
+                        </div>
+                        <div class="sensor-trend" id="humiTrend">
+                            <span>--</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sensor-card">
+                    <div class="sensor-left">
+                        <div class="sensor-tag">LUX</div>
+                        <text class="sensor-label">光照强度</text>
+                    </div>
+                    <div class="sensor-center">☀️</div>
+                    <div class="sensor-right">
+                        <div class="sensor-value-wrapper">
+                            <text class="sensor-value" id="sensorLight">--</text>
+                            <text class="sensor-unit">lx</text>
+                        </div>
+                        <div class="sensor-trend" id="lightTrend">
+                            <span>--</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sensor-card">
+                    <div class="sensor-left">
+                        <div class="sensor-tag">SMK</div>
+                        <text class="sensor-label">烟雾浓度</text>
+                    </div>
+                    <div class="sensor-center">🔥</div>
+                    <div class="sensor-right">
+                        <div class="sensor-value-wrapper">
+                            <text class="sensor-value" id="sensorSmoke">--</text>
+                            <text class="sensor-unit">ppm</text>
+                        </div>
+                        <div class="sensor-trend" id="smokeTrend">
+                            <span>--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史数据部分 -->
+        <div class="history-section">
+            <div class="history-header">
+                <div class="history-title">📊 历史数据查询</div>
+                <div class="history-controls">
+                    <input type="date" id="historyDate" class="date-input" value=""><!-- 今天的日期 -->
+                    <button onclick="loadHistoryData()" class="btn btn-primary">查询</button>
+                    <button onclick="exportHistoryData()" class="btn btn-secondary">导出数据</button>
+                </div>
+            </div>
+            <div class="history-charts">
+                <div class="history-chart-card">
+                    <div class="history-chart-title">温度历史趋势</div>
+                    <div class="history-chart-wrapper">
+                        <canvas id="historyTempChart"></canvas>
+                    </div>
+                </div>
+                <div class="history-chart-card">
+                    <div class="history-chart-title">湿度历史趋势</div>
+                    <div class="history-chart-wrapper">
+                        <canvas id="historyHumiChart"></canvas>
+                    </div>
+                </div>
+                <div class="history-chart-card">
+                    <div class="history-chart-title">光照历史趋势</div>
+                    <div class="history-chart-wrapper">
+                        <canvas id="historyLightChart"></canvas>
+                    </div>
+                </div>
+                <div class="history-chart-card">
+                    <div class="history-chart-title">烟雾历史趋势</div>
+                    <div class="history-chart-wrapper">
+                        <canvas id="historySmokeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="history-stats">
+                <div class="history-stat-card">
+                    <div class="history-stat-label">温度平均值</div>
+                    <div class="history-stat-value" id="statTempAvg">--</div>
+                </div>
+                <div class="history-stat-card">
+                    <div class="history-stat-label">温度最大值</div>
+                    <div class="history-stat-value" id="statTempMax">--</div>
+                </div>
+                <div class="history-stat-card">
+                    <div class="history-stat-label">湿度平均值</div>
+                    <div class="history-stat-value" id="statHumiAvg">--</div>
+                </div>
+                <div class="history-stat-card">
+                    <div class="history-stat-label">湿度最大值</div>
+                    <div class="history-stat-value" id="statHumiMax">--</div>
+                </div>
+                <div class="history-stat-card">
+                    <div class="history-stat-label">光照最大值</div>
+                    <div class="history-stat-value" id="statLightMax">--</div>
+                </div>
+                <div class="history-stat-card">
+                    <div class="history-stat-label">烟雾最大值</div>
+                    <div class="history-stat-value" id="statSmokeMax">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="charts-section">
+            <div class="charts-grid">
+                <!-- 温度趋势图 -->
+                <div class="chart-card">
+                    <div class="chart-title">📈 温度趋势 (最近20条)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 湿度趋势图 -->
+                <div class="chart-card">
+                    <div class="chart-title">💧 湿度趋势 (最近20条)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="humidityChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 光照趋势图 -->
+                <div class="chart-card">
+                    <div class="chart-title">☀️ 光照趋势 (最近20条)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="lightChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 烟雾趋势图 -->
+                <div class="chart-card">
+                    <div class="chart-title">🔥 烟雾趋势 (最近20条)</div>
+                    <div class="chart-wrapper">
+                        <canvas id="smokeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制部分 -->
+        <div class="control-section">
+            <div class="control-grid">
+                <div class="control-card">
+                    <div class="control-top">
+                        <div class="control-tag">FAN</div>
+                        <div class="control-status-tag" id="fanStatus">待机中</div>
+                    </div>
+                    <text class="control-label">风扇控制</text>
+                    <text class="control-desc" id="fanDesc">当前为关闭状态</text>
+                    <div class="control-toggle" id="fanToggle" onclick="toggleFan()">
+                        <div class="toggle-dot" id="fanToggleDot"></div>
+                    </div>
+                </div>
+                
+                <div class="control-card">
+                    <div class="control-top">
+                        <div class="control-tag">VLV</div>
+                        <div class="control-status-tag" id="valveStatus">待机中</div>
+                    </div>
+                    <text class="control-label">电磁阀控制</text>
+                    <text class="control-desc" id="valveDesc">当前为关闭状态</text>
+                    <div class="control-toggle" id="valveToggle" onclick="toggleValve()">
+                        <div class="toggle-dot" id="valveToggleDot"></div>
+                    </div>
+                </div>
+                
+                <div class="control-card">
+                    <div class="control-top">
+                        <div class="control-tag">ALM</div>
+                        <div class="control-status-tag" id="alarmStatus">待机中</div>
+                    </div>
+                    <text class="control-label">报警器控制</text>
+                    <text class="control-desc" id="alarmDesc">当前为关闭状态</text>
+                    <div class="control-toggle" id="alarmToggle" onclick="toggleAlarm()">
+                        <div class="toggle-dot" id="alarmToggleDot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日志入口 -->
+        <div class="log-entry-section">
+            <div class="log-entry-btn" onclick="goToLogPage()">
+                <text class="log-entry-icon">📋</text>
+                <text class="log-entry-text">查看日志</text>
+                <text class="log-entry-arrow">→</text>
+            </div>
+        </div>
+
+        <!-- 摄像头部分 -->
+        <div class="camera-section">
+            <div class="camera-header">
+                <text class="camera-title">摄像头视频流</text>
+            </div>
+            <div class="camera-input-container">
+                <input 
+                    class="camera-input" 
+                    placeholder="请输入视频流网址，例如：https://xxx.ngrok-free.dev/stream" 
+                    id="cameraUrl"
+                />
+                <button class="camera-btn" onclick="openCamera()">
+                    打开视频
+                </button>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>© 2024 智慧机房控制系统 | 中南林业科技大学</p>
+            <p style="margin-top: 5px; font-size: 0.85em;">基于OneNET云平台 | STM32 + ESP8266</p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局配置 ====================
+        const CONFIG = {
+            productId: 'K3GGK1Sj7Q',
+            deviceName: 'stm',
+            apiUrl: 'https://iot-api.heclouds.com'
+        };
+
+        // 全局变量
+        let token = '';
+        let refreshIntervalId = null;
+        let currentRefreshTime = 5000; // 默认5秒刷新
+        
+        // 系统状态
+        let systemState = {
+            connected: false,
+            currentMode: 'manual',
+            offlineMode: false,
+            sensorData: {
+                temperature: '--',
+                humidity: '--',
+                light: '--',
+                smoke: '--'
+            },
+            controlData: {
+                fan: false,
+                valve: false,
+                alarm: false
+            },
+            pendingControl: {
+                fan: null,
+                valve: null,
+                alarm: null
+            },
+            weatherData: {
+                location: '长沙市',
+                icon: '🌤️',
+                temp: '25',
+                text: '晴',
+                apparentTemp: '26',
+                windSpeed: '3.2',
+                windDir: '东北',
+                humidity: '60',
+                rain: '0',
+                cloudCover: '10'
+            },
+            logs: []
+        };
+
+        // 存储历史数据用于图表
+        let historyData = {
+            temperature: [],
+            humidity: [],
+            light: [],
+            smoke: [],
+            timestamps: []
+        };
+
+        // 上一次的数据值（用于计算趋势）
+        let lastValues = {
+            temperature: null,
+            humidity: null,
+            light: null,
+            smoke: null
+        };
+
+        // Chart.js 图表实例
+        let temperatureChart = null;
+        let humidityChart = null;
+        let lightChart = null;
+        let smokeChart = null;
+        let historyTempChart = null;
+        let historyHumiChart = null;
+        let historyLightChart = null;
+        let historySmokeChart = null;
+
+        // ==================== 图表初始化 ====================
+        function initCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#667eea',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        padding: 12
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 4,
+                        hoverRadius: 6
+                    },
+                    line: {
+                        tension: 0.4,
+                        borderWidth: 2
+                    }
+                }
+            };
+
+            // 温度图表
+            const tempCtx = document.getElementById('temperatureChart').getContext('2d');
+            temperatureChart = new Chart(tempCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '温度 (°C)',
+                        data: [],
+                        borderColor: '#ee5a24',
+                        backgroundColor: 'rgba(238,90,36,0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // 湿度图表
+            const humiCtx = document.getElementById('humidityChart').getContext('2d');
+            humidityChart = new Chart(humiCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '湿度 (%)',
+                        data: [],
+                        borderColor: '#0abde3',
+                        backgroundColor: 'rgba(10,189,227,0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // 光照图表
+            const lightCtx = document.getElementById('lightChart').getContext('2d');
+            lightChart = new Chart(lightCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '光照 (lx)',
+                        data: [],
+                        borderColor: '#ff9f43',
+                        backgroundColor: 'rgba(255,159,67,0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // 烟雾图表
+            const smokeCtx = document.getElementById('smokeChart').getContext('2d');
+            smokeChart = new Chart(smokeCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '烟雾 (ppm)',
+                        data: [],
+                        borderColor: '#6c5ce7',
+                        backgroundColor: 'rgba(108,92,231,0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // 历史温度图表
+            const historyTempCtx = document.getElementById('historyTempChart').getContext('2d');
+            historyTempChart = new Chart(historyTempCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '温度 (°C)',
+                        data: [],
+                        borderColor: '#ee5a24',
+                        backgroundColor: 'rgba(238,90,36,0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // 历史湿度图表
+            const historyHumiCtx = document.getElementById('historyHumiChart').getContext('2d');
+            historyHumiChart = new Chart(historyHumiCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '湿度 (%)',
+                        data: [],
+                        borderColor: '#0abde3',
+                        backgroundColor: 'rgba(10,189,227,0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // 历史光照图表
+            const historyLightCtx = document.getElementById('historyLightChart').getContext('2d');
+            historyLightChart = new Chart(historyLightCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '光照 (lx)',
+                        data: [],
+                        borderColor: '#ff9f43',
+                        backgroundColor: 'rgba(255,159,67,0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // 历史烟雾图表
+            const historySmokeCtx = document.getElementById('historySmokeChart').getContext('2d');
+            historySmokeChart = new Chart(historySmokeCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '烟雾 (ppm)',
+                        data: [],
+                        borderColor: '#6c5ce7',
+                        backgroundColor: 'rgba(108,92,231,0.1)',
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+        }
+
+        // ==================== 数据存储函数 ====================
+        
+        /**
+         * 保存数据到本地存储
+         */
+        function saveDataToLocalStorage(sensorData) {
+            try {
+                const now = new Date();
+                const dateKey = now.toISOString().split('T')[0]; // YYYY-MM-DD
+                const timeKey = now.toTimeString().split(' ')[0]; // HH:MM:SS
+                
+                // 获取现有数据
+                const allData = JSON.parse(localStorage.getItem('onenet_history_data') || '{}');
+                
+                // 确保日期数据存在
+                if (!allData[dateKey]) {
+                    allData[dateKey] = [];
+                }
+                
+                // 添加新数据
+                const newData = {
+                    time: timeKey,
+                    timestamp: now.getTime(),
+                    temperature: sensorData.temperature,
+                    humidity: sensorData.humidity,
+                    light: sensorData.light,
+                    smoke: sensorData.smoke,
+                    fan: systemState.controlData.fan,
+                    valve: systemState.controlData.valve,
+                    alarm: systemState.controlData.alarm
+                };
+                
+                // 限制每天最多保存1440条数据（每分钟一条）
+                if (allData[dateKey].length >= 1440) {
+                    allData[dateKey].shift(); // 删除最早的数据
+                }
+                
+                allData[dateKey].push(newData);
+                
+                // 保存回本地存储
+                localStorage.setItem('onenet_history_data', JSON.stringify(allData));
+                
+                // 清理30天前的数据
+                cleanupOldData();
+                
+            } catch (error) {
+                console.error('保存数据到本地存储失败:', error);
+            }
+        }
+
+        /**
+         * 清理30天前的历史数据
+         */
+        function cleanupOldData() {
+            try {
+                const allData = JSON.parse(localStorage.getItem('onenet_history_data') || '{}');
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                const cutoffDate = thirtyDaysAgo.toISOString().split('T')[0];
+                
+                // 删除30天前的数据
+                Object.keys(allData).forEach(dateKey => {
+                    if (dateKey < cutoffDate) {
+                        delete allData[dateKey];
+                    }
+                });
+                
+                localStorage.setItem('onenet_history_data', JSON.stringify(allData));
+            } catch (error) {
+                console.error('清理旧数据失败:', error);
+            }
+        }
+
+        /**
+         * 获取指定日期的历史数据
+         */
+        function getHistoryDataByDate(date) {
+            try {
+                const allData = JSON.parse(localStorage.getItem('onenet_history_data') || '{}');
+                return allData[date] || [];
+            } catch (error) {
+                console.error('获取历史数据失败:', error);
+                return [];
+            }
+        }
+
+        /**
+         * 加载历史数据并显示
+         */
+        function loadHistoryData() {
+            const dateInput = document.getElementById('historyDate');
+            const date = dateInput.value;
+            
+            if (!date) {
+                alert('请选择要查询的日期');
+                return;
+            }
+            
+            const data = getHistoryDataByDate(date);
+            
+            if (data.length === 0) {
+                alert('该日期没有历史数据');
+                return;
+            }
+            
+            // 准备图表数据
+            const labels = data.map(item => item.time);
+            const tempData = data.map(item => parseFloat(item.temperature) || 0);
+            const humiData = data.map(item => parseFloat(item.humidity) || 0);
+            const lightData = data.map(item => parseInt(item.light) || 0);
+            const smokeData = data.map(item => parseInt(item.smoke) || 0);
+            
+            // 更新历史图表
+            updateHistoryChart(historyTempChart, labels, tempData);
+            updateHistoryChart(historyHumiChart, labels, humiData);
+            updateHistoryChart(historyLightChart, labels, lightData);
+            updateHistoryChart(historySmokeChart, labels, smokeData);
+            
+            // 计算统计数据
+            updateHistoryStats(tempData, humiData, lightData, smokeData);
+        }
+
+        /**
+         * 更新历史图表
+         */
+        function updateHistoryChart(chart, labels, data) {
+            chart.data.labels = [...labels];
+            chart.data.datasets[0].data = [...data];
+            chart.update();
+        }
+
+        /**
+         * 更新历史统计数据
+         */
+        function updateHistoryStats(tempData, humiData, lightData, smokeData) {
+            // 温度统计
+            const tempAvg = tempData.reduce((sum, val) => sum + val, 0) / tempData.length;
+            const tempMax = Math.max(...tempData);
+            
+            // 湿度统计
+            const humiAvg = humiData.reduce((sum, val) => sum + val, 0) / humiData.length;
+            const humiMax = Math.max(...humiData);
+            
+            // 光照和烟雾最大值
+            const lightMax = Math.max(...lightData);
+            const smokeMax = Math.max(...smokeData);
+            
+            // 更新显示
+            document.getElementById('statTempAvg').textContent = tempAvg.toFixed(1) + '°C';
+            document.getElementById('statTempMax').textContent = tempMax.toFixed(1) + '°C';
+            document.getElementById('statHumiAvg').textContent = humiAvg.toFixed(1) + '%';
+            document.getElementById('statHumiMax').textContent = humiMax.toFixed(1) + '%';
+            document.getElementById('statLightMax').textContent = lightMax + ' lx';
+            document.getElementById('statSmokeMax').textContent = smokeMax + ' ppm';
+        }
+
+        /**
+         * 导出历史数据为CSV
+         */
+        function exportHistoryData() {
+            const dateInput = document.getElementById('historyDate');
+            const date = dateInput.value;
+            
+            if (!date) {
+                alert('请选择要导出的日期');
+                return;
+            }
+            
+            const data = getHistoryDataByDate(date);
+            
+            if (data.length === 0) {
+                alert('该日期没有历史数据');
+                return;
+            }
+            
+            // 生成CSV内容
+            let csvContent = "时间,温度(°C),湿度(%),光照(lx),烟雾(ppm),风扇状态,电磁阀状态,报警器状态\n";
+            
+            data.forEach(item => {
+                const fanStatus = item.fan ? '开启' : '关闭';
+                const valveStatus = item.valve ? '开启' : '关闭';
+                const alarmStatus = item.alarm ? '开启' : '关闭';
+                
+                csvContent += `${item.time},${item.temperature},${item.humidity},${item.light},${item.smoke},${fanStatus},${valveStatus},${alarmStatus}\n`;
+            });
+            
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `智慧机房数据_${date}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ==================== 页面初始化 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🌡️ 智慧机房控制系统初始化中...');
+            
+            // 初始化图表
+            initCharts();
+            
+            // 设置今天的日期
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('historyDate').value = today;
+            
+            // 检查是否有保存的Token
+            const savedToken = localStorage.getItem('onenet_token');
+            if (savedToken) {
+                document.getElementById('tokenInput').value = savedToken;
+                token = savedToken;
+                
+                // 自动连接
+                setTimeout(() => {
+                    connectDevice();
+                }, 1000);
+            }
+
+            console.log('✅ 系统初始化完成');
+        });
+
+        // ==================== 工具函数 ====================
+        
+        /**
+         * 显示错误信息
+         */
+        function showError(message, type = 'error') {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            if (type === 'success') {
+                errorDiv.style.backgroundColor = '#d4edda';
+                errorDiv.style.color = '#155724';
+                errorDiv.style.borderLeftColor = '#28a745';
+            }
+            
+            const container = document.querySelector('.container');
+            const configSection = document.querySelector('.config-section');
+            container.insertBefore(errorDiv, configSection.nextSibling);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 3000);
+        }
+        
+        /**
+         * 设置自动刷新间隔
+         */
+        function setRefreshInterval(btn, interval) {
+            // 移除所有按钮的active类
+            const buttons = document.querySelectorAll('.refresh-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            
+            // 添加当前按钮的active类
+            btn.classList.add('active');
+            
+            // 清除之前的定时器
+            if (refreshIntervalId) {
+                clearInterval(refreshIntervalId);
+                refreshIntervalId = null;
+            }
+            
+            // 设置新的定时器
+            if (interval > 0) {
+                refreshIntervalId = setInterval(() => {
+                    refreshData();
+                }, interval);
+                currentRefreshTime = interval;
+            }
+        }
+        
+        /**
+         * 设置自定义刷新间隔
+         */
+        function setCustomRefreshInterval() {
+            const input = document.getElementById('customRefreshInput');
+            const seconds = parseInt(input.value);
+            
+            if (isNaN(seconds) || seconds < 1 || seconds > 3600) {
+                showError('请输入1-3600之间的数值');
+                return;
+            }
+            
+            const interval = seconds * 1000; // 转换为毫秒
+            
+            // 移除所有按钮的active类
+            const buttons = document.querySelectorAll('.refresh-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            
+            // 清除之前的定时器
+            if (refreshIntervalId) {
+                clearInterval(refreshIntervalId);
+                refreshIntervalId = null;
+            }
+            
+            // 设置新的定时器
+            refreshIntervalId = setInterval(() => {
+                refreshData();
+            }, interval);
+            currentRefreshTime = interval;
+            
+            showError(`自定义刷新间隔已设置为 ${seconds} 秒`, 'success');
+        }
+        
+        // ==================== 控制函数 ====================
+        
+        /**
+         * 切换风扇状态
+         */
+        async function toggleFan() {
+            const newState = !systemState.controlData.fan;
+            systemState.controlData.fan = newState;
+            
+            // 更新UI
+            const fanToggle = document.getElementById('fanToggle');
+            const fanToggleDot = document.getElementById('fanToggleDot');
+            const fanStatus = document.getElementById('fanStatus');
+            const fanDesc = document.getElementById('fanDesc');
+            
+            fanToggle.classList.toggle('active', newState);
+            fanToggleDot.classList.toggle('active', newState);
+            fanStatus.textContent = newState ? '运行中' : '待机中';
+            fanStatus.classList.toggle('active', newState);
+            fanDesc.textContent = newState ? '当前为开启状态' : '当前为关闭状态';
+            
+            // 发送控制命令
+            const success = await sendControlCommand('fan', newState);
+            if (!success) {
+                // 发送失败，恢复原状态
+                systemState.controlData.fan = !newState;
+                fanToggle.classList.toggle('active', !newState);
+                fanToggleDot.classList.toggle('active', !newState);
+                fanStatus.textContent = !newState ? '运行中' : '待机中';
+                fanStatus.classList.toggle('active', !newState);
+                fanDesc.textContent = !newState ? '当前为开启状态' : '当前为关闭状态';
+                showError('控制失败，请检查网络连接');
+            }
+        }
+        
+        /**
+         * 切换电磁阀状态
+         */
+        async function toggleValve() {
+            const newState = !systemState.controlData.valve;
+            systemState.controlData.valve = newState;
+            
+            // 更新UI
+            const valveToggle = document.getElementById('valveToggle');
+            const valveToggleDot = document.getElementById('valveToggleDot');
+            const valveStatus = document.getElementById('valveStatus');
+            const valveDesc = document.getElementById('valveDesc');
+            
+            valveToggle.classList.toggle('active', newState);
+            valveToggleDot.classList.toggle('active', newState);
+            valveStatus.textContent = newState ? '运行中' : '待机中';
+            valveStatus.classList.toggle('active', newState);
+            valveDesc.textContent = newState ? '当前为开启状态' : '当前为关闭状态';
+            
+            // 发送控制命令
+            const success = await sendControlCommand('valve', newState);
+            if (!success) {
+                // 发送失败，恢复原状态
+                systemState.controlData.valve = !newState;
+                valveToggle.classList.toggle('active', !newState);
+                valveToggleDot.classList.toggle('active', !newState);
+                valveStatus.textContent = !newState ? '运行中' : '待机中';
+                valveStatus.classList.toggle('active', !newState);
+                valveDesc.textContent = !newState ? '当前为开启状态' : '当前为关闭状态';
+                showError('控制失败，请检查网络连接');
+            }
+        }
+        
+        /**
+         * 切换报警器状态
+         */
+        async function toggleAlarm() {
+            const newState = !systemState.controlData.alarm;
+            systemState.controlData.alarm = newState;
+            
+            // 更新UI
+            const alarmToggle = document.getElementById('alarmToggle');
+            const alarmToggleDot = document.getElementById('alarmToggleDot');
+            const alarmStatus = document.getElementById('alarmStatus');
+            const alarmDesc = document.getElementById('alarmDesc');
+            
+            alarmToggle.classList.toggle('active', newState);
+            alarmToggleDot.classList.toggle('active', newState);
+            alarmStatus.textContent = newState ? '运行中' : '待机中';
+            alarmStatus.classList.toggle('active', newState);
+            alarmDesc.textContent = newState ? '当前为开启状态' : '当前为关闭状态';
+            
+            // 发送控制命令
+            const success = await sendControlCommand('alarm', newState);
+            if (!success) {
+                // 发送失败，恢复原状态
+                systemState.controlData.alarm = !newState;
+                alarmToggle.classList.toggle('active', !newState);
+                alarmToggleDot.classList.toggle('active', !newState);
+                alarmStatus.textContent = !newState ? '运行中' : '待机中';
+                alarmStatus.classList.toggle('active', !newState);
+                alarmDesc.textContent = !newState ? '当前为开启状态' : '当前为关闭状态';
+                showError('控制失败，请检查网络连接');
+            }
+        }
+        
+        /**
+         * 打开日志页面
+         */
+        function goToLogPage() {
+            alert('日志页面功能开发中，敬请期待！');
+        }
+        
+        /**
+         * 打开视频流
+         */
+        function openCamera() {
+            const cameraUrl = document.getElementById('cameraUrl').value.trim();
+            if (!cameraUrl) {
+                showError('请输入视频流网址');
+                return;
+            }
+            
+            try {
+                // 打开新窗口显示视频流
+                window.open(cameraUrl, '_blank', 'width=800,height=600');
+            } catch (error) {
+                showError('打开视频流失败');
+            }
+        }
+        
+        // ==================== API 调用函数 ====================
+        
+        /**
+         * 连接设备
+         */
+        async function connectDevice() {
+            console.log('开始连接设备...');
+            const tokenInput = document.getElementById('tokenInput');
+            const inputToken = tokenInput.value.trim();
+            
+            if (!inputToken) {
+                showError('请输入OneNET Token');
+                return;
+            }
+            
+            token = inputToken;
+            localStorage.setItem('onenet_token', token);
+            
+            try {
+                console.log('Token:', token);
+                console.log('Product ID:', CONFIG.productId);
+                console.log('Device Name:', CONFIG.deviceName);
+                console.log('API URL:', CONFIG.apiUrl);
+                
+                updateDeviceStatus(true);
+                await refreshData();
+                showError('设备连接成功', 'success');
+            } catch (error) {
+                console.error('连接失败:', error);
+                updateDeviceStatus(false);
+                showError(`连接失败: ${error.message}`);
+            }
+        }
+        
+        /**
+         * 刷新数据
+         */
+        async function refreshData() {
+            console.log('开始刷新数据...');
+            try {
+                const data = await fetchDeviceData();
+                console.log('获取到的数据:', data);
+                if (data && data.data && Array.isArray(data.data)) {
+                    updateSensorData(data.data);
+                } else {
+                    showError('获取数据格式错误');
+                }
+            } catch (error) {
+                console.error('刷新数据失败:', error);
+                showError(`刷新数据失败: ${error.message}`);
+            }
+        }
+        
+        /**
+         * 从OneNET获取设备属性数据
+         */
+        async function fetchDeviceData() {
+            if (!token) {
+                showError('请先输入Token并连接设备');
+                return null;
+            }
+
+            try {
+                const url = new URL(`${CONFIG.apiUrl}/thingmodel/query-device-property`);
+                url.searchParams.append('product_id', CONFIG.productId);
+                url.searchParams.append('device_name', CONFIG.deviceName);
+                console.log('请求URL:', url.toString());
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'authorization': token
+                    }
+                });
+
+                console.log('响应状态:', response.status);
+                console.log('响应状态文本:', response.statusText);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Token无效或已过期');
+                    } else if (response.status === 404) {
+                        throw new Error('设备不存在');
+                    } else {
+                        throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+                    }
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('获取数据失败:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * 发送控制命令到OneNET
+         */
+        async function sendControlCommand(identifier, value) {
+            if (!token) {
+                showError('请先连接设备');
+                return false;
+            }
+
+            try {
+                const apiUrl = systemState.offlineMode ? 
+                    `${CONFIG.apiUrl}/thingmodel/set-device-desired-property` : 
+                    `${CONFIG.apiUrl}/thingmodel/set-device-property`;
+
+                const requestData = {
+                    product_id: CONFIG.productId,
+                    device_name: CONFIG.deviceName,
+                    params: {
+                        [identifier]: value
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'authorization': token
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const result = await response.json();
+                return result.code === 0;
+            } catch (error) {
+                console.error('发送控制命令失败:', error);
+                return false;
+            }
+        }
+
+        // ==================== 数据更新函数 ====================
+        
+        /**
+         * 更新设备状态显示
+         */
+        function updateDeviceStatus(isOnline) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+
+            systemState.connected = isOnline;
+            
+            if (isOnline) {
+                statusText.textContent = '设备在线';
+                statusDot.style.backgroundColor = '#00ff88';
+                statusDot.style.boxShadow = '0 0 10px #00ff88';
+            } else {
+                statusText.textContent = '设备离线';
+                statusDot.style.backgroundColor = '#ff4757';
+                statusDot.style.boxShadow = '0 0 10px #ff4757';
+            }
+        }
+
+        /**
+         * 计算并显示趋势
+         */
+        function updateTrend(trendElementId, current, previous) {
+            const element = document.getElementById(trendElementId);
+            
+            if (previous === null || current === null || isNaN(current) || isNaN(previous)) {
+                element.innerHTML = '<span style="color:#999;">暂无历史数据</span>';
+                return;
+            }
+
+            const diff = current - previous;
+            const percentChange = ((diff / previous) * 100).toFixed(1);
+
+            if (Math.abs(diff) < 0.01) {
+                element.innerHTML = '<span class="trend-stable">➡️ 稳定</span>';
+            } else if (diff > 0) {
+                element.innerHTML = `<span class="trend-up">↑ ${percentChange}%</span>`;
+            } else {
+                element.innerHTML = `<span class="trend-down">↓ ${Math.abs(percentChange)}%</span>`;
+            }
+        }
+
+        /**
+         * 添加数据到历史记录并更新图表
+         */
+        function addDataToHistory(sensorType, value, timestamp) {
+            // 限制历史数据最多保存20条
+            if (historyData[sensorType].length >= 20) {
+                historyData[sensorType].shift();
+                if (sensorType === 'temperature') {
+                    historyData.timestamps.shift();
+                }
+            }
+
+            historyData[sensorType].push(value);
+            
+            // 只为温度添加时间戳（避免重复）
+            if (sensorType === 'temperature') {
+                const timeStr = timestamp ? 
+                    new Date(timestamp).toLocaleTimeString('zh-CN', {hour12:false}) : 
+                    new Date().toLocaleTimeString('zh-CN', {hour12:false});
+                historyData.timestamps.push(timeStr);
+            }
+        }
+
+        /**
+         * 更新图表显示
+         */
+        function updateCharts() {
+            // 更新温度图表
+            temperatureChart.data.labels = [...historyData.timestamps];
+            temperatureChart.data.datasets[0].data = [...historyData.temperature];
+            temperatureChart.update();
+
+            // 更新湿度图表
+            humidityChart.data.labels = [...historyData.timestamps];
+            humidityChart.data.datasets[0].data = [...historyData.humidity];
+            humidityChart.update();
+
+            // 更新光照图表
+            lightChart.data.labels = [...historyData.timestamps];
+            lightChart.data.datasets[0].data = [...historyData.light];
+            lightChart.update();
+
+            // 更新烟雾图表
+            smokeChart.data.labels = [...historyData.timestamps];
+            smokeChart.data.datasets[0].data = [...historyData.smoke];
+            smokeChart.update();
+        }
+
+        /**
+         * 更新传感器数据显示
+         */
+        function updateSensorData(data) {
+            if (!data || !Array.isArray(data)) return;
+
+            const sensorData = {
+                temperature: '--',
+                humidity: '--',
+                light: '--',
+                smoke: '--'
+            };
+
+            data.forEach(item => {
+                if (!item.identifier || item.value === undefined) return;
+
+                switch (item.identifier) {
+                    case 'temperature':
+                        const tempValue = parseFloat(item.value);
+                        systemState.sensorData.temperature = tempValue.toFixed(1);
+                        sensorData.temperature = systemState.sensorData.temperature;
+                        document.getElementById('sensorTemp').textContent = systemState.sensorData.temperature;
+                        
+                        // 更新趋势
+                        updateTrend('tempTrend', tempValue, lastValues.temperature);
+                        lastValues.temperature = tempValue;
+                        addDataToHistory('temperature', tempValue);
+                        break;
+                        
+                    case 'humidity':
+                        const humiValue = parseFloat(item.value);
+                        systemState.sensorData.humidity = humiValue.toFixed(1);
+                        sensorData.humidity = systemState.sensorData.humidity;
+                        document.getElementById('sensorHumi').textContent = systemState.sensorData.humidity;
+                        
+                        // 更新趋势
+                        updateTrend('humiTrend', humiValue, lastValues.humidity);
+                        lastValues.humidity = humiValue;
+                        addDataToHistory('humidity', humiValue);
+                        break;
+                        
+                    case 'light':
+                        const lightValue = parseInt(item.value);
+                        systemState.sensorData.light = lightValue.toString();
+                        sensorData.light = systemState.sensorData.light;
+                        document.getElementById('sensorLight').textContent = systemState.sensorData.light;
+                        
+                        // 更新趋势
+                        updateTrend('lightTrend', lightValue, lastValues.light);
+                        lastValues.light = lightValue;
+                        addDataToHistory('light', lightValue);
+                        break;
+                        
+                    case 'smoke':
+                        const smokeValue = parseInt(item.value);
+                        systemState.sensorData.smoke = smokeValue.toString();
+                        sensorData.smoke = systemState.sensorData.smoke;
+                        document.getElementById('sensorSmoke').textContent = systemState.sensorData.smoke;
+                        
+                        // 更新趋势
+                        updateTrend('smokeTrend', smokeValue, lastValues.smoke);
+                        lastValues.smoke = smokeValue;
+                        addDataToHistory('smoke', smokeValue);
+                        break;
+                }
+            });
+            
+            // 更新图表
+            updateCharts();
+            
+            // 保存数据到本地存储
+            saveDataToLocalStorage(sensorData);
+            
+            // 更新同步时间
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', {hour12: false});
+            document.getElementById('lastSyncTime').textContent = timeStr;
+        }
+    </script>
