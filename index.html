@@ -3760,26 +3760,20 @@
          * 更新表格数据
          */
         function updateTableData(dataType, startDate, endDate) {
-            // 从本地存储获取真实数据
             const tableBody = document.getElementById('detailTableBody');
             tableBody.innerHTML = '';
             
-            // 解析选择的时间范围
             const start = new Date(startDate);
             const end = new Date(endDate);
             
             console.log('查询参数 - 数据类型:', dataType, '开始时间:', startDate, '结束时间:', endDate);
-            console.log('解析后的开始时间:', start.toISOString(), '结束时间:', end.toISOString());
             
-            // 从本地存储获取历史数据
             const historyData = JSON.parse(localStorage.getItem('onenet_history_data') || '{}');
             console.log('从本地存储获取历史数据:', historyData);
             console.log('历史数据的日期键:', Object.keys(historyData));
             
-            // 提取指定时间范围内的数据
             const filteredData = [];
             
-            // 遍历所有日期
             Object.keys(historyData).forEach(dateKey => {
                 const dateData = historyData[dateKey];
                 console.log('处理日期:', dateKey, '数据条数:', dateData ? dateData.length : 0);
@@ -3789,17 +3783,34 @@
                 dateData.forEach(item => {
                     if (!item.time) return;
                     
-                    const itemTimeStr = `${dateKey} ${item.time}`;
-                    const itemTime = new Date(itemTimeStr);
-                    
-                    if (itemTime >= start && itemTime <= end) {
-                        const value = parseFloat(item[dataType]);
-                        if (!isNaN(value)) {
-                            filteredData.push({
-                                date: dateKey,
-                                time: item.time,
-                                value: value
-                            });
+                    // 使用 timestamp 进行比较，避免日期解析问题
+                    if (item.timestamp) {
+                        const itemTime = new Date(item.timestamp);
+                        if (itemTime >= start && itemTime <= end) {
+                            const value = parseFloat(item[dataType]);
+                            if (!isNaN(value)) {
+                                filteredData.push({
+                                    date: dateKey,
+                                    time: item.time,
+                                    value: value,
+                                    timestamp: item.timestamp
+                                });
+                            }
+                        }
+                    } else {
+                        // 兼容旧数据：将日期时间字符串转换为标准格式
+                        const itemTimeStr = dateKey + 'T' + item.time;
+                        const itemTime = new Date(itemTimeStr);
+                        
+                        if (!isNaN(itemTime.getTime()) && itemTime >= start && itemTime <= end) {
+                            const value = parseFloat(item[dataType]);
+                            if (!isNaN(value)) {
+                                filteredData.push({
+                                    date: dateKey,
+                                    time: item.time,
+                                    value: value
+                                });
+                            }
                         }
                     }
                 });
@@ -3807,14 +3818,16 @@
             
             console.log('筛选后的数据条数:', filteredData.length);
             
-            // 按完整的日期和时间排序
-            filteredData.sort((a, b) => new Date(`${a.date} ${a.time}`) - new Date(`${b.date} ${b.time}`));
+            filteredData.sort((a, b) => {
+                if (a.timestamp && b.timestamp) {
+                    return a.timestamp - b.timestamp;
+                }
+                return new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time);
+            });
             
-            // 根据当前页码计算数据偏移
             const offset = (currentPage - 1) * pageSize;
             const pageData = filteredData.slice(offset, offset + pageSize);
             
-            // 如果没有数据，显示提示
             if (pageData.length === 0) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -3826,7 +3839,6 @@
                 return;
             }
             
-            // 显示数据
             pageData.forEach(item => {
                 const row = document.createElement('tr');
                 const fullDateTime = `${item.date} ${item.time}`;
@@ -3837,7 +3849,6 @@
                 tableBody.appendChild(row);
             });
             
-            // 更新分页信息
             const totalPages = Math.ceil(filteredData.length / pageSize);
             const pageInfoEl = document.getElementById('pageInfo');
             if (pageInfoEl) {
