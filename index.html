@@ -4307,7 +4307,13 @@
                             }
                         }
                         
-                        if (systemState.deviceStatus === 'online') {
+                        // 只要有有效数据就保存历史数据（不依赖设备在线状态）
+                        const hasValidData = !isNaN(parseFloat(sensorData.temperature)) ||
+                                            !isNaN(parseFloat(sensorData.humidity)) ||
+                                            !isNaN(parseInt(sensorData.light)) ||
+                                            !isNaN(parseInt(sensorData.smoke));
+                        
+                        if (hasValidData) {
                             saveHistoricalData(sensorData);
                             saveDataToLocalStorage(sensorData);
                         }
