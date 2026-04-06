@@ -66,10 +66,167 @@
             .input-field {
                 @apply border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200;
             }
+            
+            /* 移动端适配 */
+            @media (max-width: 768px) {
+                /* 移动端顶部导航栏 */
+                .mobile-header {
+                    display: flex !important;
+                }
+                
+                /* 侧边栏移动端样式 */
+                #sidebar {
+                    position: fixed;
+                    left: -100%;
+                    top: 0;
+                    height: 100vh;
+                    z-index: 1000;
+                    width: 240px !important;
+                    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+                }
+                
+                #sidebar.open {
+                    left: 0;
+                }
+                
+                #sidebar .sidebar-text {
+                    display: block !important;
+                }
+                
+                /* 遮罩层 */
+                .sidebar-overlay {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    z-index: 999;
+                }
+                
+                .sidebar-overlay.show {
+                    display: block;
+                }
+                
+                /* 主内容区域 */
+                main {
+                    margin-left: 0 !important;
+                    width: 100% !important;
+                }
+                
+                .main-content {
+                    padding-top: 4.5rem !important;
+                    padding-left: 1rem !important;
+                    padding-right: 1rem !important;
+                }
+                
+                /* 卡片网格调整 */
+                .grid-cols-4 {
+                    grid-template-columns: repeat(2, 1fr) !important;
+                }
+                
+                .grid-cols-3 {
+                    grid-template-columns: repeat(2, 1fr) !important;
+                }
+                
+                /* 表格滚动 */
+                .overflow-x-auto {
+                    -webkit-overflow-scrolling: touch;
+                }
+                
+                /* 按钮调整 */
+                .btn-primary, .btn-secondary {
+                    padding: 0.5rem 1rem;
+                    font-size: 0.875rem;
+                }
+                
+                /* 模态框调整 */
+                .fixed.inset-0 .bg-white,
+                .fixed.inset-0 > div > .bg-white {
+                    margin: 0.5rem !important;
+                    max-height: 90vh !important;
+                    max-width: calc(100% - 1rem) !important;
+                    overflow-y: auto !important;
+                    width: calc(100% - 1rem) !important;
+                }
+                
+                /* 模态框内容滚动 */
+                .fixed.inset-0 {
+                    overflow-y: auto;
+                    -webkit-overflow-scrolling: touch;
+                }
+                
+                /* 隐藏桌面端元素 */
+                .desktop-only {
+                    display: none !important;
+                }
+                
+                /* 卡片调整 */
+                .bg-white.rounded-xl {
+                    margin-bottom: 1rem;
+                }
+                
+                /* 图表容器调整 */
+                canvas {
+                    max-height: 200px !important;
+                }
+                
+                /* 输入框调整 */
+                input, select, textarea {
+                    font-size: 16px !important;
+                }
+                
+                /* 底部导航占位 */
+                .nav-placeholder {
+                    height: 60px;
+                }
+            }
+            
+            /* 小屏幕手机适配 */
+            @media (max-width: 480px) {
+                .grid-cols-4 {
+                    grid-template-columns: repeat(2, 1fr) !important;
+                }
+                
+                .grid-cols-3 {
+                    grid-template-columns: 1fr !important;
+                }
+                
+                .grid-cols-2 {
+                    grid-template-columns: 1fr !important;
+                }
+                
+                /* 按钮全宽 */
+                .btn-primary, .btn-secondary {
+                    width: 100%;
+                }
+            }
+            
+            /* 桌面端隐藏移动端元素 */
+            .mobile-header {
+                display: none;
+            }
+            
+            .sidebar-overlay {
+                display: none;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
+    <!-- 移动端顶部导航栏 -->
+    <div class="mobile-header fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 h-14 flex items-center px-4 justify-between">
+        <button id="mobileMenuBtn" onclick="toggleMobileSidebar()" class="text-gray-600 hover:text-primary p-2">
+            <i class="fa fa-bars text-xl"></i>
+        </button>
+        <h1 class="text-lg font-semibold text-gray-800">智慧机房控制系统</h1>
+        <div class="w-8"></div>
+    </div>
+    
+    <!-- 遮罩层 -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+    
     <div class="flex h-screen overflow-hidden">
         <!-- 侧边栏 -->
         <div id="sidebar" class="bg-white border-r border-gray-200 w-16 transition-all duration-300 ease-in-out flex flex-col shadow-sm">
@@ -182,7 +339,7 @@
             </header>
             
             <!-- 内容区 -->
-            <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-50 main-content">
                 <!-- 仪表盘页面 -->
                 <div id="page-dashboard" class="page-content">
                 <!-- 头部状态 -->
@@ -1988,6 +2145,39 @@
                 sidebarTexts.forEach(text => text.classList.add('hidden'));
             }
         });
+        
+        // ==================== 移动端侧边栏控制 ====================
+        let isMobileSidebarOpen = false;
+        
+        function toggleMobileSidebar() {
+            if (isMobileSidebarOpen) {
+                closeMobileSidebar();
+            } else {
+                openMobileSidebar();
+            }
+        }
+        
+        function openMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.add('open');
+            overlay.classList.add('show');
+            isMobileSidebarOpen = true;
+        }
+        
+        function closeMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+            isMobileSidebarOpen = false;
+        }
+        
+        // 点击菜单项后关闭移动端侧边栏
+        function switchPageWithMobileClose(pageName) {
+            closeMobileSidebar();
+            switchPage(pageName);
+        }
 
         // ==================== 图表初始化 ====================
         
