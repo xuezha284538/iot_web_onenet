@@ -4395,7 +4395,12 @@
             const now = new Date();
             const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
             systemState.lastSyncTime = time;
-            document.getElementById('lastSyncTime').textContent = time;
+            
+            const syncTimeEl = document.getElementById('lastSyncTime');
+            if (syncTimeEl) {
+                syncTimeEl.textContent = time;
+            }
+            console.log('同步时间已更新:', time);
         }
 
         /**
@@ -4463,13 +4468,18 @@
          * 查询设备数据
          */
         function queryDeviceData() {
+            console.log('queryDeviceData 开始执行');
+            
             fetch(`${API_CONFIG.baseUrl}/thingmodel/query-device-property?product_id=${API_CONFIG.productId}&device_name=${API_CONFIG.deviceName}`, {
                 method: 'GET',
                 headers: {
                     'authorization': API_CONFIG.token
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('API 响应状态:', response.status);
+                return response.json();
+            })
             .then(data => {
                 console.log('查询设备数据返回:', JSON.stringify(data));
                 
@@ -4485,14 +4495,20 @@
                         const recentlyControlled = systemState.offlineMode && (now - systemState.lastControlTime < 10000);
                         
                         dataArray.forEach(item => {
+                            console.log('解析数据项:', item.identifier, '=', item.value);
+                            
                             if (item.identifier === 'temperature' && item.value !== undefined) {
-                                sensorData.temperature = parseFloat(item.value).toFixed(1);
+                                const val = parseFloat(item.value);
+                                sensorData.temperature = isNaN(val) ? '--' : val.toFixed(1);
                             } else if (item.identifier === 'humidity' && item.value !== undefined) {
-                                sensorData.humidity = parseFloat(item.value).toFixed(1);
+                                const val = parseFloat(item.value);
+                                sensorData.humidity = isNaN(val) ? '--' : val.toFixed(1);
                             } else if (item.identifier === 'light' && item.value !== undefined) {
-                                sensorData.light = parseInt(item.value).toString();
+                                const val = parseInt(item.value);
+                                sensorData.light = isNaN(val) ? '--' : val.toString();
                             } else if (item.identifier === 'smoke' && item.value !== undefined) {
-                                sensorData.smoke = parseInt(item.value).toString();
+                                const val = parseInt(item.value);
+                                sensorData.smoke = isNaN(val) ? '--' : val.toString();
                             } else if (!recentlyControlled && item.identifier === 'fan' && item.value !== undefined) {
                                 controlData.fan = parseBooleanValue(item.value);
                                 if (pendingControl.fan !== null && pendingControl.fan === controlData.fan) {
@@ -4510,6 +4526,8 @@
                                 }
                             }
                         });
+                        
+                        console.log('解析后的传感器数据:', sensorData);
                         
                         if (recentlyControlled) {
                             systemState.sensorData = sensorData;
@@ -4539,6 +4557,8 @@
                                             !isNaN(parseInt(sensorData.light)) ||
                                             !isNaN(parseInt(sensorData.smoke));
                         
+                        console.log('是否有有效数据:', hasValidData);
+                        
                         if (hasValidData) {
                             saveHistoricalData(sensorData);
                             saveDataToLocalStorage(sensorData);
@@ -4548,6 +4568,8 @@
                             autoControl(sensorData, controlData);
                         }
                     }
+                } else {
+                    console.error('API 返回错误:', data);
                 }
             })
             .catch(error => {
@@ -4701,10 +4723,18 @@
         function updateSensorDataUI() {
             const { sensorData, controlData } = systemState;
             
-            document.getElementById('sensorTemp').textContent = sensorData.temperature + '°C';
-            document.getElementById('sensorHumi').textContent = sensorData.humidity + '%';
-            document.getElementById('sensorLight').textContent = sensorData.light + ' lx';
-            document.getElementById('sensorSmoke').textContent = sensorData.smoke + ' ppm';
+            console.log('updateSensorDataUI 被调用，数据:', sensorData);
+            
+            // 安全地更新 DOM 元素
+            const tempEl = document.getElementById('sensorTemp');
+            const humiEl = document.getElementById('sensorHumi');
+            const lightEl = document.getElementById('sensorLight');
+            const smokeEl = document.getElementById('sensorSmoke');
+            
+            if (tempEl) tempEl.textContent = sensorData.temperature + '°C';
+            if (humiEl) humiEl.textContent = sensorData.humidity + '%';
+            if (lightEl) lightEl.textContent = sensorData.light + ' lx';
+            if (smokeEl) smokeEl.textContent = sensorData.smoke + ' ppm';
             
             updateTrends(sensorData.temperature, sensorData.humidity, sensorData.light, sensorData.smoke);
             updateCharts(sensorData.temperature, sensorData.humidity, sensorData.light, sensorData.smoke);
@@ -4910,8 +4940,15 @@
          * 初始化页面
          */
         function initPage() {
-            // 初始化实时数据图表（仪表盘页面）
-            initRealTimeCharts();
+            console.log('initPage 开始执行');
+            
+            try {
+                // 初始化实时数据图表（仪表盘页面）
+                initRealTimeCharts();
+                console.log('图表初始化完成');
+            } catch (e) {
+                console.error('图表初始化失败:', e);
+            }
             
             // 使用内置Token自动连接OneNET
             console.log('使用内置Token自动连接OneNET');
@@ -4920,9 +4957,11 @@
             systemState.connected = true;
             
             // 立即查询设备状态
+            console.log('开始查询设备状态');
             queryDeviceStatus();
             
             // 立即获取数据
+            console.log('开始查询设备数据');
             queryDeviceData();
             
             // 启动定时刷新（每2秒）
@@ -4933,14 +4972,19 @@
                 queryDeviceData();
                 queryDeviceStatus();
             }, currentRefreshTime);
+            console.log('定时刷新已启动，间隔:', currentRefreshTime, 'ms');
             
             // 更新今日采集数量
             updateTodayDataCount();
             
             // 获取真实天气数据
-            fetchRealWeather();
-            // 每30分钟刷新一次天气
-            setInterval(fetchRealWeather, 30 * 60 * 1000);
+            try {
+                fetchRealWeather();
+                // 每30分钟刷新一次天气
+                setInterval(fetchRealWeather, 30 * 60 * 1000);
+            } catch (e) {
+                console.error('天气获取失败:', e);
+            }
             
             // 初始化登录状态
             updateLoginStatus();
