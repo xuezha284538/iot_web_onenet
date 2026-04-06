@@ -94,7 +94,7 @@
                 }
                 
                 /* 遮罩层 */
-                .sidebar-overlay {
+                #sidebarOverlay {
                     display: none;
                     position: fixed;
                     top: 0;
@@ -105,7 +105,7 @@
                     z-index: 999;
                 }
                 
-                .sidebar-overlay.show {
+                #sidebarOverlay.show {
                     display: block;
                 }
                 
@@ -203,13 +203,23 @@
                 }
             }
             
-            /* 桌面端隐藏移动端元素 */
-            .mobile-header {
-                display: none;
-            }
-            
-            .sidebar-overlay {
-                display: none;
+            /* 桌面端样式 */
+            @media (min-width: 769px) {
+                /* 隐藏移动端元素 */
+                .mobile-header {
+                    display: none !important;
+                }
+                
+                /* 隐藏遮罩层 */
+                #sidebarOverlay {
+                    display: none !important;
+                }
+                
+                /* 侧边栏正常显示 */
+                #sidebar {
+                    position: relative !important;
+                    left: 0 !important;
+                }
             }
         }
     </style>
@@ -225,7 +235,7 @@
     </div>
     
     <!-- 遮罩层 -->
-    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+    <div id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
     
     <div class="flex h-screen overflow-hidden">
         <!-- 侧边栏 -->
@@ -2449,6 +2459,11 @@
          * 切换页面
          */
         function switchPage(pageName) {
+            // 关闭移动端侧边栏（如果函数存在）
+            if (typeof closeMobileSidebar === 'function') {
+                closeMobileSidebar();
+            }
+            
             // 隐藏所有页面
             document.querySelectorAll('.page-content').forEach(page => {
                 page.classList.add('hidden');
@@ -3587,6 +3602,8 @@
          */
         function saveDataToLocalStorage(sensorData) {
             try {
+                console.log('saveDataToLocalStorage 被调用，数据:', sensorData);
+                
                 const now = new Date();
                 const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -3597,6 +3614,8 @@
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 const seconds = String(now.getSeconds()).padStart(2, '0');
                 const timeKey = `${hours}:${minutes}:${seconds}`;
+                
+                console.log('保存数据 - 日期:', dateKey, '时间:', timeKey);
                 
                 // 使用新的存储方式
                 if (!isNaN(parseFloat(sensorData.temperature))) {
@@ -3626,10 +3645,12 @@
                     humidity: isNaN(parseFloat(sensorData.humidity)) ? 0 : parseFloat(sensorData.humidity),
                     light: isNaN(parseInt(sensorData.light)) ? 0 : parseInt(sensorData.light),
                     smoke: isNaN(parseInt(sensorData.smoke)) ? 0 : parseInt(sensorData.smoke),
-                    fan: systemState.controlData.fan,
-                    valve: systemState.controlData.valve,
-                    alarm: systemState.controlData.alarm
+                    fan: systemState.controlData ? systemState.controlData.fan : false,
+                    valve: systemState.controlData ? systemState.controlData.valve : false,
+                    alarm: systemState.controlData ? systemState.controlData.alarm : false
                 };
+                
+                console.log('准备保存的新数据:', newData);
                 
                 const lastItem = allData[dateKey][allData[dateKey].length - 1];
                 if (lastItem &&
@@ -3637,6 +3658,7 @@
                     lastItem.humidity === newData.humidity &&
                     lastItem.light === newData.light &&
                     lastItem.smoke === newData.smoke) {
+                    console.log('数据未变化，跳过保存');
                     return;
                 }
                 
@@ -3646,6 +3668,7 @@
                 
                 allData[dateKey].push(newData);
                 localStorage.setItem('onenet_history_data', JSON.stringify(allData));
+                console.log('数据已保存到 localStorage，当前日期数据条数:', allData[dateKey].length);
                 
                 cleanupOldData();
                 updateTodayDataCount();
@@ -3957,6 +3980,7 @@
             const end = new Date(endDate);
             
             console.log('查询参数 - 数据类型:', dataType, '开始时间:', startDate, '结束时间:', endDate);
+            console.log('解析后的时间 - 开始:', start.toISOString(), '结束:', end.toISOString());
             
             const historyData = JSON.parse(localStorage.getItem('onenet_history_data') || '{}');
             console.log('从本地存储获取历史数据:', historyData);
@@ -3976,6 +4000,7 @@
                     // 使用 timestamp 进行比较，避免日期解析问题
                     if (item.timestamp) {
                         const itemTime = new Date(item.timestamp);
+                        console.log('数据项时间:', itemTime.toISOString(), '值:', item[dataType]);
                         if (itemTime >= start && itemTime <= end) {
                             const value = parseFloat(item[dataType]);
                             if (!isNaN(value)) {
