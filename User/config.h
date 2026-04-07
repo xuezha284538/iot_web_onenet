@@ -26,7 +26,7 @@
 #define ENABLE_LED          0   // LED使能（0-禁用，1-启用）
 #define ENABLE_BUZZER       0   // 蜂鸣器使能（0-禁用，1-启用）
 #define ENABLE_KEY          0   // 按键使能（0-禁用，1-启用）
-#define ENABLE_WATCHDOG     1   // 看门狗使能（0-禁用，1-启用）
+#define ENABLE_WATCHDOG     0   // 看门狗使能（0-禁用，1-启用）
 
 // ==================== 看门狗配置 ====================
 #define WATCHDOG_TIMEOUT    5000    // 看门狗超时时间(ms)
