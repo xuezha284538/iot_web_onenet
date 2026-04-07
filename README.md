@@ -1,4 +1,4 @@
-# iot_web 网页web网址  [https://xuezha284538.github.io/iot_web/](https://xuezha284538.github.io/iot_web_onenet/)
+# iot_web 网页web网址 https://xuezha284538.github.io/iot_web_onenet/
 # 智慧机房控制系统
 
 ## 项目简介
